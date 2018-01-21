@@ -1,11 +1,5 @@
 #!/usr/bin/env python
 
-#define KEYCODE_R 0x43
-#define KEYCODE_L 0x44
-#define KEYCODE_U 0x41
-#define KEYCODE_D 0x42
-#define KEYCODE_Q 0x71
-
 #Instructions
 # Download getch using: pip install https://pypi.python.org/packages/source/g/getch/getch-1.0-python2.tar.gz#md5=586ea0f1f16aa094ff6a30736ba03c50
 # Change keyboard update rate using: sudo kbdrate -r 30 -d 250
@@ -16,7 +10,7 @@ import getch
 import rospy
 from std_msgs.msg import String
 
-def print_publish(key, pub):
+def print_publish(key, arrow_key, pub):
     #List of keyboard commands
         if key == 'a':
             send_string = "Roll Left"
@@ -34,23 +28,22 @@ def print_publish(key, pub):
             send_string = "Yaw Left"
         elif key == 'e':
             send_string = "Yaw Right"
-        if key == 'A':
+        elif key == 'A' and arrow_key == 1:
             send_string = "Up arrow"
-        elif key == 'B':
+        elif key == 'B' and arrow_key == 1:
             send_string = "Down arrow"
-        elif key == 'C':
+        elif key == 'C' and arrow_key == 1:
             send_string = "Right arrow"
-        elif key == 'D':
+        elif key == 'D' and arrow_key == 1:
             send_string = "Left arrow"
         else:
-            send_string = "%s - Invalid" %key
-        
-        last_key = key #Keep track of last key when holding keyboard key
-        
+            send_string = "%s - Invalid" %key 
+                
         #Publish new key
         rospy.loginfo(send_string)
         pub.publish(send_string)
 
+#Main function
 def sendKey():
     #Set up publisher node
     pub = rospy.Publisher('chatter', String, queue_size=1)
@@ -59,27 +52,31 @@ def sendKey():
 
     #define variables
     last_key = 0
+    arrow_key = 0
     released = "key released"
 
     while not rospy.is_shutdown():
         #get keyboard input
         key = getch.getch()
         
-        #Check for arrow keys
-        if ord(key) == 27:
+        #Check for special character and obtain third character
+        if ord(key) == 27: #Special character key
             key = getch.getch()
-            if ord(key) == 91:
+            if ord(key) == 91: #Special character key
                 key = getch.getch()
-            #else: nothing or the node will close
-        #else: nothing or the node will close
+                arrow_key = 1 #Differentiate between capital 'A', 'B', 'C', 'D' and arrow keys
+        else:
+            arrow_key = 0
         
         #Was the key released
         if last_key != key:
             pub.publish(released)
         
-        print_publish(key, pub)
+        #Print and publish keyboard command
+        print_publish(key, arrow_key, pub)
 
-        
+        last_key = key #Keep track of last key when holding keyboard key
+
         #Sleep until next rate
         rate.sleep()
 
