@@ -9,8 +9,13 @@
 import getch
 import rospy
 from std_msgs.msg import String
+from geometry_msgs.msg import Twist
+
+twist = Twist()
 
 def print_publish(key, arrow_key, pub):
+    
+    
     #List of keyboard commands
         if key == 'a':
             send_string = "Roll Left"
