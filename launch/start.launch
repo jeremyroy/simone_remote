@@ -1,0 +1,9 @@
+<launch>
+
+    <!-- Publish keyboard commands -->
+    <node pkg = "commands" type = "sendTwist.py" name = "sender" output = "screen" launch-prefix = "xterm -e" />
+
+    <!--Receive keyboard commands -->
+    <node pkg = "commands" type = "receiveTwist.py" name = "receiver" output = "screen" launch-prefix = "xterm -e" />
+
+</launch>
