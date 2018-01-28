@@ -16,50 +16,38 @@ import sys
 
 twist = Twist()
 
-
-switcher = {'a':(1,0,0,0),'d':(-1,0,0,0),'w':(0,1,0,0),'s':(0,-1,0,0),'.':(0,0,0,0),' ':(0,0,1,0),'m':(0,0,-1,0)}
-switcher_current = {'a':(1,0,0,0),'d':(-1,0,0,0),'w':(0,1,0,0),'s':(0,-1,0,0),'.':(0,0,0,0),' ':(0,0,1,0),'m':(0,0,-1,0)}
+# 'a' and 'd' control angular x axis. 'w' and 's' control angular y axis. 'q' and 'e' control the angular z axis.
+switcher = {'a':(0,1,0,0),'d':(0,-1,0,0),'w':(0,0,1,0),'s':(0,0,-1,0),'q':(0,0,0,1),'e':(0,0,0,-1),'h':(0,0,0,0)}
 
 def print_publish(key, arrow_key, pub):
-    if key in switcher_current:
-        val = switcher_current[key]
-        twist.linear.x, twist.linear.y, twist.linear.z, twist.angular.z = val
-        rospy.loginfo(twist)
-        pub.publish(twist)
-    else:
-        print("Invalid Key")
-
-    #List of keyboard commands
-       # if key == 'a':
-       #     send_string = "Roll Left"
-       # elif key == 'd':
-       #     send_string = "Roll Right"
-       # elif key == 'w':
-       #     send_string = "Pitch Fwd"
-       # elif key == 's':
-       #     send_string = "Pitch Rvs"
-       # elif key == ' ':
-       #     send_string = "Up"
-       # elif key == 'm':
-       #     send_string = "Down"
-       # elif key == 'q':
-       #     send_string = "Yaw Left"
-       # elif key == 'e':
-       #     send_string = "Yaw Right"
-       # elif key == 'A' and arrow_key == 1:
-       #     send_string = "Up arrow"
-       # elif key == 'B' and arrow_key == 1:
-       #     send_string = "Down arrow"
-       # elif key == 'C' and arrow_key == 1:
-       #     send_string = "Right arrow"
-       # elif key == 'D' and arrow_key == 1:
-       #     send_string = "Left arrow"
-       # else:
-       #     send_string = "%s - Invalid" %key 
-                
-    #Publish new key
-    #rospy.loginfo(send_string)
-    #pub.publish(send_string)
+    #Flight modes
+    if key == '0': #All motors disabled
+        twist.linear.y = 0
+    elif key == '1': #Acro mode
+        twist.linear.y = 1
+    elif key == '2': #Stabilization mode
+        twist.linear.y = 2
+    elif key == '3': #Autonomous mode
+        twist.linear.y = 3
+    elif key in switcher:
+        val = switcher[key]
+        twist.linear.x, twist.angular.x, twist.angular.y, twist.angular.z = val
+    else: 
+        #Set other to 0 when rising, descending, or if invalid key
+        twist.linear.x, twist.angular.x, twist.angular.y, twist.angular.z = (0,0,0,0)
+        
+        #Manage thrust up or down
+        if key == ' ' and twist.linear.z < 1: #Going up 
+            twist.linear.z += 0.05
+        elif key == '.'and twist.linear.z > 0: #Going down
+            twist.linear.z -= 0.05
+        #Unknown key. Do not publish anything
+        else:
+            print("Invalid Key")
+    
+    #Ready to publish linear and angular values
+    rospy.loginfo(twist)
+    pub.publish(twist)
 
 #Main function
 def sendKey():
@@ -69,7 +57,6 @@ def sendKey():
     rate = rospy.Rate(35)
 
     #define variables
-    last_key = 0
     arrow_key = 0
     inc = 1 
 
@@ -86,15 +73,6 @@ def sendKey():
         else:
             arrow_key = 0
         
-        #Is the newest key the same as the last
-        if last_key == key: #if yes, then increase dictionary values of that list
-            temp_list = [x + inc for x in switcher_current[key]]
-            switcher_current[key] = temp_list
-            print switcher_current[key]
-        else: #Otherwise, revert to original standard values
-            switcher_current = switcher.copy()
-            print key
-            print last_key
 
         #Print and publish keyboard command
         print_publish(key, arrow_key, pub)
