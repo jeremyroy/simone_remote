@@ -9,7 +9,6 @@
 import getch
 import rospy
 import roslib;
-from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 
 import sys
@@ -20,6 +19,7 @@ twist = Twist()
 switcher = {'a':(0,1,0,0),'d':(0,-1,0,0),'w':(0,0,1,0),'s':(0,0,-1,0),'q':(0,0,0,1),'e':(0,0,0,-1),'h':(0,0,0,0)}
 
 def print_publish(key, arrow_key, pub):
+    #Support for arrow keys can be added by checking if arrow_key is 1, and callng for 'A','B','C','D'
     #Flight modes
     if key == '0': #All motors disabled
         twist.linear.y = 0
@@ -29,19 +29,19 @@ def print_publish(key, arrow_key, pub):
         twist.linear.y = 2
     elif key == '3': #Autonomous mode
         twist.linear.y = 3
-    elif key in switcher:
+    elif key in switcher: #Check for roll, pitch, yaw commands
         val = switcher[key]
         twist.linear.x, twist.angular.x, twist.angular.y, twist.angular.z = val
-    else: 
+    else: #Up, down, or invalid command
         #Set other to 0 when rising, descending, or if invalid key
         twist.linear.x, twist.angular.x, twist.angular.y, twist.angular.z = (0,0,0,0)
         
         #Manage thrust up or down
-        if key == ' ' and twist.linear.z < 1: #Going up 
+        if key == ' ' and twist.linear.z < 1: #Going up. Limited to 100% Thurst 
             twist.linear.z += 0.05
-        elif key == '.'and twist.linear.z > 0: #Going down
+        elif key == '.'and twist.linear.z > 0: #Going down. Limited to 0% Thrust
             twist.linear.z -= 0.05
-        #Unknown key. Do not publish anything
+        #Unknown key, or Thrust is already at min/max
         else:
             print("Invalid Key")
     
@@ -58,7 +58,6 @@ def sendKey():
 
     #define variables
     arrow_key = 0
-    inc = 1 
 
     while not rospy.is_shutdown():
         #get keyboard input
@@ -76,8 +75,6 @@ def sendKey():
 
         #Print and publish keyboard command
         print_publish(key, arrow_key, pub)
-
-        last_key = key #Keep track of last key when holding keyboard key
 
         #Sleep until next rate
         rate.sleep()
