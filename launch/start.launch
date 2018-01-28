@@ -1,4 +1,6 @@
 <launch>
+    
+    <!-- Modify package name, type (file name), name of the node. Last 2 selections open the node in a new window -->
 
     <!-- Publish keyboard commands -->
     <node pkg = "commands" type = "sendTwist.py" name = "sender" output = "screen" launch-prefix = "xterm -e" />
